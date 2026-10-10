@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1a1d23">
+<title>TankFiring · 5星坦克属性计算器</title>
+<style>
+/* TankFiring 5星坦克属性查询 · 移动端优先 */
+:root {
+  --bg: #1a1d23;
+  --panel: #242830;
+  --card: #2c313c;
+  --card-atk: #3d2a2a;
+  --card-hp: #2a3d2e;
+  --card-rpr: #2a3340;
+  --text: #e8eaed;
+  --muted: #9aa0a6;
+  --accent: #f0b429;
+  --input: #323842;
+  --btn-fg: #1a1d23;
+  --border: #3a4050;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+}
+
+.wrap {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 16px 12px 24px;
+}
+
+/* 标题 */
+.title {
+  color: var(--accent);
+  font-size: 22px;
+  font-weight: bold;
+  margin: 0 4px 2px;
+}
+.subtitle {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 0 4px 12px;
+  line-height: 1.5;
+}
+
+/* 控制面板 */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 14px 10px;
+}
+
+.row { margin-bottom: 12px; }
+.row:last-child { margin-bottom: 2px; }
+.row-label {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+select {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--input) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M1 1l5 5 5-5' stroke='%23e8eaed' stroke-width='1.5' fill='none'/></svg>") no-repeat right 12px center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 16px;
+  padding: 10px 34px 10px 12px;
+  font-family: inherit;
+}
+
+/* 等级按钮 1-13 */
+.levels {
+  display: grid;
+  grid-template-columns: repeat(13, minmax(0, 1fr));
+  gap: 4px;
+}
+.lv-btn {
+  min-height: 44px;
+  border: none;
+  border-radius: 7px;
+  background: var(--input);
+  color: var(--text);
+  font-size: 15px;
+  font-weight: bold;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 0.06s ease;
+}
+.lv-btn:active { transform: scale(0.94); }
+.lv-btn.active {
+  background: var(--accent);
+  color: var(--btn-fg);
+}
+@media (max-width: 560px) {
+  .levels { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+}
+
+/* 滑条行：输入框 + 滑条 同一行 */
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.num-input {
+  width: 72px;
+  flex: none;
+  background: var(--input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 16px;
+  text-align: center;
+  padding: 9px 4px;
+  font-family: inherit;
+}
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+
+input[type="range"] {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 36px;
+  margin: 0;
+  background: transparent;
+  touch-action: none;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--input);
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 26px;
+  height: 26px;
+  margin-top: -10px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--btn-fg);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+}
+input[type="range"]::-moz-range-track {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--input);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--btn-fg);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+}
+
+/* 元信息 */
+.meta-line {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 12px 4px 4px;
+}
+
+/* 属性卡片 */
+.cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-top: 8px;
+}
+.card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 14px 18px;
+  text-align: center;
+}
+.card-atk { background: var(--card-atk); }
+.card-hp  { background: var(--card-hp); }
+.card-rpr { background: var(--card-rpr); }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.card-title { color: var(--muted); font-size: 15px; font-weight: bold; }
+.up-toggle {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--muted); font-size: 13px; font-weight: normal;
+  cursor: pointer; user-select: none; -webkit-user-select: none;
+  padding: 4px 8px; border-radius: 6px;
+}
+.up-toggle:active { background: rgba(255, 255, 255, 0.07); }
+.up-toggle input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); cursor: pointer; }
+.up-toggle.on { color: var(--accent); }
+.card-value {
+  color: var(--text);
+  font-size: 38px;
+  font-weight: bold;
+  line-height: 1.2;
+  margin: 8px 0 4px;
+  font-variant-numeric: tabular-nums;
+}
+.card-base { color: var(--muted); font-size: 14px; margin-top: 10px; }
+.card-delta { color: var(--muted); font-size: 13px; margin-top: 6px; }
+
+@media (min-width: 720px) {
+  .cards { grid-template-columns: repeat(3, 1fr); }
+  .card-value { font-size: 44px; }
+}
+
+/* 底部 */
+.footer {
+  margin-top: 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text);
+}
+.footer b { color: var(--accent); }
+
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1 class="title">5星坦克属性计算器 © 2026 hixanny</h1>
+  <p class="subtitle" style="opacity:0;height:0;margin:0;padding:0;overflow:hidden;"></p>
+
+  <div class="panel">
+
+    <div class="row">
+      <label class="row-label" for="tankSel">坦克</label>
+      <select id="tankSel"></select>
+    </div>
+
+    <div class="row">
+      <span class="row-label">等级 (1–13)</span>
+      <div class="levels" id="levels"></div>
+    </div>
+
+    <div class="row">
+      <span class="row-label">勋章等级 (0–250)</span>
+      <div class="slider-row">
+        <input type="number" id="medalInput" class="num-input" min="0" max="250" step="1" value="0" inputmode="numeric">
+        <input type="range" id="medalSlider" min="0" max="250" step="1" value="0" aria-label="勋章等级">
+      </div>
+    </div>
+
+    <div class="row">
+      <span class="row-label">五星坦克加成 (0–65%)</span>
+      <div class="slider-row">
+        <input type="number" id="pctInput" class="num-input" min="0" max="65" step="1" value="0" inputmode="numeric">
+        <input type="range" id="pctSlider" min="0" max="65" step="1" value="0" aria-label="五星坦克加成">
+      </div>
+    </div>
+
+  </div>
+
+  <p class="meta-line" id="metaLine"></p>
+
+  <div class="cards">
+    <div class="card card-atk">
+      <div class="card-head">
+        <span class="card-title">攻击</span>
+        <label class="up-toggle"><input type="checkbox" id="攻击Up">已升级</label>
+      </div>
+      <div class="card-value" id="攻击Value">—</div>
+      <div class="card-base" id="攻击Base">基础 —</div>
+      <div class="card-delta" id="攻击Delta">熟练度共 0</div>
+    </div>
+    <div class="card card-hp">
+      <div class="card-head">
+        <span class="card-title">血量</span>
+        <label class="up-toggle"><input type="checkbox" id="血量Up">已升级</label>
+      </div>
+      <div class="card-value" id="血量Value">—</div>
+      <div class="card-base" id="血量Base">基础 —</div>
+      <div class="card-delta" id="血量Delta">熟练度共 0</div>
+    </div>
+    <div class="card card-rpr">
+      <div class="card-head">
+        <span class="card-title">维修</span>
+        <label class="up-toggle"><input type="checkbox" id="维修Up">已升级</label>
+      </div>
+      <div class="card-value" id="维修Value">—</div>
+      <div class="card-base" id="维修Base">基础 —</div>
+      <div class="card-delta" id="维修Delta">熟练度共 0</div>
+    </div>
+  </div>
+
+  <div class="footer" id="footerLine"></div>
+
+</div>
+<script>
+// ===== 数据（与 TankFiring_坦克属性查询.py 内置数据完全一致）=====
+
+const TANK_ORDER = [
+  "M1A2D Abrams", "Type99A", "T-14 Armata", "K2", "Merkava Mark IVM",
+  "Challenger2 TES", "Leclerc T4", "Type 10", "Leopard 2AX", "Oplot-M",
+  "Arjun MK2", "Karrar", "Ariete C2", "Leclerc S1", "M2020",
+];
+
+// 逐级属性: {坦克: {"攻击": [lv1..lv13], "血量": [...], "维修": [...]}}
+const ATTRS = {
+  "M1A2D Abrams": {
+    "攻击": [2757, 2922, 3097, 3283, 3480, 3689, 3910, 4145, 4394, 4658, 4937, 5233, 5547],
+    "血量": [13607, 14423, 15288, 16205, 17177, 18208, 19300, 20458, 21685, 22986, 24365, 25827, 27377],
+    "维修": [2268, 2404, 2548, 2701, 2863, 3035, 3217, 3410, 3614, 3831, 4061, 4304, 4563],
+  },
+  "Type99A": {
+    "攻击": [8230, 8724, 9247, 9802, 10390, 11013, 11674, 12374, 13116, 13903, 14737, 15621, 16558],
+    "血量": [8157, 8646, 9165, 9715, 10298, 10916, 11571, 12265, 13001, 13781, 14608, 15484, 16413],
+    "维修": [2719, 2882, 3055, 3238, 3433, 3639, 3857, 4088, 4334, 4594, 4869, 5161, 5471],
+  },
+  "T-14 Armata": {
+    "攻击": [5471, 5799, 6147, 6516, 6907, 7321, 7760, 8226, 8720, 9243, 9798, 10386, 11009],
+    "血量": [10866, 11518, 12209, 12942, 13719, 14542, 15415, 16340, 17320, 18359, 19461, 20629, 21867],
+    "维修": [2415, 2560, 2713, 2876, 3049, 3232, 3426, 3631, 3849, 4080, 4325, 4584, 4859],
+  },
+  "K2": {
+    "攻击": [9599, 10175, 10786, 11433, 12119, 12846, 13617, 14434, 15300, 16218, 17191, 18222, 19315],
+    "血量": [6789, 7196, 7628, 8086, 8571, 9085, 9630, 10208, 10820, 11469, 12157, 12886, 13659],
+    "维修": [2263, 2399, 2543, 2695, 2857, 3028, 3210, 3403, 3607, 3823, 4052, 4295, 4553],
+  },
+  "Merkava Mark IVM": {
+    "攻击": [2287, 2424, 2569, 2723, 2886, 3059, 3243, 3438, 3644, 3863, 4095, 4341, 4601],
+    "血量": [15841, 16791, 17798, 18866, 19998, 21198, 22470, 23818, 25247, 26762, 28368, 30070, 31874],
+    "维修": [2640, 2798, 2966, 3144, 3333, 3533, 3745, 3970, 4208, 4460, 4728, 5012, 5312],
+  },
+  "Challenger2 TES": {
+    "攻击": [6402, 6786, 7193, 7625, 8082, 8567, 9081, 9626, 10204, 10816, 11465, 12153, 12882],
+    "血量": [9050, 9593, 10169, 10779, 11426, 12112, 12839, 13609, 14426, 15292, 16210, 17183, 18214],
+    "维修": [2011, 2132, 2260, 2395, 2539, 2692, 2853, 3024, 3206, 3398, 3602, 3818, 4048],
+  },
+  "Leclerc T4": {
+    "攻击": [3194, 3386, 3589, 3804, 4032, 4274, 4530, 4802, 5090, 5395, 5719, 6062, 6426],
+    "血量": [11308, 11986, 12705, 13467, 14275, 15132, 16040, 17002, 18022, 19103, 20249, 21464, 22752],
+    "维修": [1885, 1998, 2118, 2244, 2379, 2522, 2673, 2834, 3004, 3184, 3375, 3577, 3792],
+  },
+  "Type 10": {
+    "攻击": [6869, 7281, 7718, 8181, 8672, 9192, 9744, 10329, 10949, 11606, 12302, 13040, 13822],
+    "血量": [9506, 10076, 10681, 11322, 12001, 12721, 13484, 14293, 15151, 16060, 17024, 18045, 19128],
+    "维修": [3169, 3359, 3560, 3774, 4000, 4240, 4495, 4764, 5050, 5353, 5675, 6015, 6376],
+  },
+  "Leopard 2AX": {
+    "攻击": [4568, 4842, 5133, 5441, 5767, 6113, 6480, 6869, 7281, 7718, 8181, 8672, 9192],
+    "血量": [12672, 13432, 14238, 15092, 15998, 16958, 17975, 19054, 20197, 21409, 22694, 24056, 25499],
+    "维修": [2816, 2985, 3164, 3354, 3555, 3768, 3994, 4234, 4488, 4758, 5043, 5346, 5666],
+  },
+  "Oplot-M": {
+    "攻击": [4568, 4842, 5133, 5441, 5767, 6113, 6480, 6869, 7281, 7718, 8181, 8672, 9192],
+    "血量": [12672, 13432, 14238, 15092, 15998, 16958, 17975, 19054, 20197, 21409, 22694, 24056, 25499],
+    "维修": [2816, 2985, 3164, 3354, 3555, 3768, 3994, 4234, 4488, 4758, 5043, 5346, 5666],
+  },
+  "Arjun MK2": {
+    "攻击": [6869, 7281, 7718, 8181, 8672, 9192, 9744, 10329, 10949, 11606, 12302, 13040, 13822],
+    "血量": [9506, 10076, 10681, 11322, 12001, 12721, 13484, 14293, 15151, 16060, 17024, 18045, 19128],
+    "维修": [3169, 3359, 3560, 3774, 4000, 4240, 4495, 4764, 5050, 5353, 5675, 6015, 6376],
+  },
+  "Karrar": {
+    "攻击": [2287, 2424, 2569, 2723, 2886, 3059, 3243, 3438, 3644, 3863, 4095, 4341, 4601],
+    "血量": [15841, 16791, 17798, 18866, 19998, 21198, 22470, 23818, 25247, 26762, 28368, 30070, 31874],
+    "维修": [2640, 2798, 2966, 3144, 3333, 3533, 3745, 3970, 4208, 4460, 4728, 5012, 5312],
+  },
+  "Ariete C2": {
+    "攻击": [3194, 3386, 3589, 3804, 4032, 4274, 4530, 4802, 5090, 5395, 5719, 6062, 6426],
+    "血量": [11308, 11986, 12705, 13467, 14275, 15132, 16040, 17002, 18022, 19103, 20249, 21464, 22752],
+    "维修": [1885, 1998, 2118, 2244, 2379, 2522, 2673, 2834, 3004, 3184, 3375, 3577, 3792],
+  },
+  "Leclerc S1": {
+    "攻击": [3194, 3386, 3589, 3804, 4032, 4274, 4530, 4802, 5090, 5395, 5719, 6062, 6426],
+    "血量": [11308, 11986, 12705, 13467, 14275, 15132, 16040, 17002, 18022, 19103, 20249, 21464, 22752],
+    "维修": [1885, 1998, 2118, 2244, 2379, 2522, 2673, 2834, 3004, 3184, 3375, 3577, 3792],
+  },
+  "M2020": {
+    "攻击": [9599, 10175, 10786, 11433, 12119, 12846, 13617, 14434, 15300, 16218, 17191, 18222, 19315],
+    "血量": [6789, 7196, 7628, 8086, 8571, 9085, 9630, 10208, 10820, 11469, 12157, 12886, 13659],
+    "维修": [2263, 2399, 2543, 2695, 2857, 3028, 3210, 3403, 3607, 3823, 4052, 4295, 4553],
+  },
+};
+
+// 熟练度加成解锁表（0 级为 0，1 级解锁基础值，特定等级 +1）
+const BONUS_PTS = {
+  "M1A2D Abrams": {
+    "血量": [[0, 0], [1, 34], [246, 35]],
+    "攻击": [[0, 0], [1, 6], [27, 7]],
+    "维修": [[0, 0], [1, 5], [83, 6]],
+  },
+  "Type99A": {
+    "血量": [[0, 0], [1, 20], [152, 21]],
+    "攻击": [[0, 0], [1, 20], [107, 21]],
+    "维修": [[0, 0], [1, 6], [51, 7]],
+  },
+  "T-14 Armata": {
+    "血量": [[0, 0], [1, 27], [209, 28]],
+    "攻击": [[0, 0], [1, 13], [81, 14]],
+    "维修": [[0, 0], [1, 6], [241, 7]],
+  },
+  "K2": {
+    "血量": [[0, 0], [1, 16], [7, 17]],
+    "攻击": [[0, 0], [1, 24]],
+    "维修": [[0, 0], [1, 5], [86, 6]],
+  },
+  "Merkava Mark IVM": {
+    "血量": [[0, 0], [1, 39], [100, 40]],
+    "攻击": [[0, 0], [1, 5], [71, 6]],
+    "维修": [[0, 0], [1, 6], [101, 7]],
+  },
+  "Challenger2 TES": {
+    "血量": [[0, 0], [1, 22], [94, 23]],
+    "攻击": [[0, 0], [1, 16], [249, 17]],
+    "维修": [[0, 0], [1, 5], [244, 6]],
+  },
+  "Leclerc T4": {
+    "血量": [[0, 0], [1, 28], [183, 29]],
+    "攻击": [[0, 0], [1, 7], [4, 8]],
+    "维修": [[0, 0], [1, 4], [72, 5]],
+  },
+  "Type 10": {
+    "血量": [[0, 0], [1, 23], [59, 24]],
+    "攻击": [[0, 0], [1, 17], [207, 18]],
+    "维修": [[0, 0], [1, 7], [20, 8]],
+  },
+  "Leopard 2AX": {
+    "血量": [[0, 0], [1, 31], [81, 32]],
+    "攻击": [[0, 0], [1, 11], [146, 12]],
+    "维修": [[0, 0], [1, 7], [241, 8]],
+  },
+  "Oplot-M": {
+    "血量": [[0, 0], [1, 31], [81, 32]],
+    "攻击": [[0, 0], [1, 11], [146, 12]],
+    "维修": [[0, 0], [1, 7], [241, 8]],
+  },
+  "Arjun MK2": {
+    "血量": [[0, 0], [1, 23], [59, 24]],
+    "攻击": [[0, 0], [1, 17], [207, 18]],
+    "维修": [[0, 0], [1, 7], [20, 8]],
+  },
+  "Karrar": {
+    "血量": [[0, 0], [1, 39], [100, 40]],
+    "攻击": [[0, 0], [1, 5], [71, 6]],
+    "维修": [[0, 0], [1, 6], [101, 7]],
+  },
+  "Ariete C2": {
+    "血量": [[0, 0], [1, 28], [183, 29]],
+    "攻击": [[0, 0], [1, 7], [4, 8]],
+    "维修": [[0, 0], [1, 4], [72, 5]],
+  },
+  "Leclerc S1": {
+    "血量": [[0, 0], [1, 28], [183, 29]],
+    "攻击": [[0, 0], [1, 7], [4, 8]],
+    "维修": [[0, 0], [1, 4], [72, 5]],
+  },
+  "M2020": {
+    "血量": [[0, 0], [1, 16], [7, 17]],
+    "攻击": [[0, 0], [1, 24]],
+    "维修": [[0, 0], [1, 5], [86, 6]],
+  },
+};
+
+// 基础信息（类型 / 装填 / 速度 / 精度）
+const META = {
+  "M1A2D Abrams": ["遭遇型", 3, 100, 100],
+  "Type99A": ["攻城型", 9, 100, 100],
+  "T-14 Armata": ["突击型", 6, 100, 100],
+  "K2": ["攻城型", 9, 100, 100],
+  "Merkava Mark IVM": ["遭遇型", 3, 100, 100],
+  "Challenger2 TES": ["突击型", 6, 100, 100],
+  "Leclerc T4": ["遭遇型", 3, 100, 100],
+  "Type 10": ["攻城型", 9, 100, 100],
+  "Leopard 2AX": ["突击型", 6, 100, 100],
+  "Oplot-M": ["突击型", 6, 100, 100],
+  "Arjun MK2": ["攻城型", 9, 100, 100],
+  "Karrar": ["遭遇型", 3, 100, 100],
+  "Ariete C2": ["遭遇型", 3, 100, 100],
+  "Leclerc S1": ["遭遇型", 3, 100, 100],
+  "M2020": ["攻城型", 9, 100, 100],
+};
+
+const ATTR_KEYS = ["攻击", "血量", "维修"];
+
+// ===== 算法（与 Python 版一致）=====
+
+function clampInt(v, lo, hi) {
+  v = parseInt(v, 10);
+  if (isNaN(v)) return lo;
+  return Math.max(lo, Math.min(hi, v));
+}
+
+// 累加 Lv1..Lv当前勋章 的每级加成数值（分段常数 × 级数）
+function bonusSum(tank, attr, medal) {
+  const m = clampInt(medal, 0, 250);
+  if (m <= 0) return 0;
+  const pts = (BONUS_PTS[tank] || {})[attr] || [[0, 0]];
+  let total = 0;
+  let prevLv = 0, prevV = 0;
+  for (const [lv, v] of pts) {
+    if (lv <= 0) { prevLv = 0; prevV = v; continue; }
+    const start = Math.max(prevLv, 1);
+    const end = Math.min(m, lv - 1);
+    if (end >= start) total += prevV * (end - start + 1);
+    if (m < lv) return total;
+    prevLv = lv; prevV = v;
+  }
+  const start = Math.max(prevLv, 1);
+  if (m >= start) total += prevV * (m - start + 1);
+  return total;
+}
+
+function baseStat(tank, attr, level) {
+  const row = (ATTRS[tank] || {})[attr];
+  if (!row) return 0;
+  const lv = clampInt(level, 1, 13);
+  return row[lv - 1];
+}
+
+// (基础值, 累加加成, 最终值；加成 0 时最终值 = 基础+累加，加成 > 0 时 ×(100+pct)% 四舍五入)
+function finalStat(tank, attr, level, medal, pct, upgraded = false) {
+  const base = baseStat(tank, attr, level);
+  const bonus = bonusSum(tank, attr, medal);
+  // 已升级：基础值先 +4.5%
+  const total = upgraded ? base * 1.045 + bonus : (base + bonus);
+  // Python: no_pct = math.floor(total+0.5); then final = math.floor(total*(100+pct)/100+0.5);
+  const noPct = Math.floor(total + 0.5);
+  const final = Math.floor(noPct * (100 + pct) / 100 + 0.5);
+  const extra = final - noPct;
+  return { base, bonus, final, extra };
+}
+
+function fmt(n) { return n.toLocaleString("en-US"); }
+
+// ===== UI =====
+
+const state = { tank: TANK_ORDER[0], level: 1, medal: 0, pct: 0, "攻击Up": false, "血量Up": false, "维修Up": false };
+
+const $ = (id) => document.getElementById(id);
+
+function buildLevelButtons() {
+  const box = $("levels");
+  box.innerHTML = "";
+  for (let lv = 1; lv <= 13; lv++) {
+    const b = document.createElement("button");
+    b.className = "lv-btn";
+    b.type = "button";
+    b.textContent = String(lv);
+    b.addEventListener("click", () => { state.level = lv; render(); });
+    box.appendChild(b);
+  }
+}
+
+function render() {
+  // 同步复选框状态和禁用状态
+  if (state.level >= 13) {
+    // 13 级及以上：强制禁用且取消勾选
+    for (const attr of ["攻击", "血量", "维修"]) {
+      const chk = document.getElementById(attr + "Up");
+      if (chk) {
+        chk.disabled = true;
+        chk.checked = false;
+        state[attr + "Up"] = false;
+      }
+    }
+  } else {
+    // 1-12 级：正常同步
+    for (const attr of ["攻击", "血量", "维修"]) {
+      const chk = document.getElementById(attr + "Up");
+      if (chk) {
+        chk.disabled = false;
+        chk.checked = state[attr + "Up"];
+      }
+    }
+  }
+  // 等级按钮高亮
+  const btns = $("levels").children;
+  for (let i = 0; i < btns.length; i++) {
+    btns[i].classList.toggle("active", i + 1 === state.level);
+  }
+  // 控件回写（防越界）
+  $("medalInput").value = state.medal;
+  $("medalSlider").value = state.medal;
+  $("pctInput").value = state.pct;
+  $("pctSlider").value = state.pct;
+
+  const [ttype, reloadS, speed, acc] = META[state.tank] || ["", 0, 0, 0];
+  $("metaLine").textContent =
+    `${state.tank}  ·  ${ttype}  ·  装填 ${reloadS}s  ·  速度 ${speed}  ·  精度 ${acc}`;
+
+  for (const attr of ATTR_KEYS) {
+    const r = finalStat(state.tank, attr, state.level, state.medal, state.pct, state[attr + "Up"]);
+    $(attr + "Value").textContent = fmt(r.final);
+    $(attr + "Base").textContent = "基础 " + fmt(r.base) + (state[attr + "Up"] ? "（已升级）" : "");
+    // 计算升级加成值
+    const base = baseStat(state.tank, attr, state.level);
+    const upAdd = state[attr + "Up"] ? Math.round(base * 0.045) : 0;
+    const parts = ["熟练度共 " + fmt(r.bonus)];
+    if (state[attr + "Up"]) {
+      parts.push("升级 + " + fmt(upAdd));
+    }
+    if (state.pct > 0) {
+      parts.push("加成 + " + fmt(r.extra));
+    }
+    $(attr + "Delta").textContent = parts.join(" · ");
+  }
+
+  const atk = finalStat(state.tank, "攻击", state.level, state.medal, state.pct);
+  const hp = finalStat(state.tank, "血量", state.level, state.medal, state.pct);
+  const rpr = finalStat(state.tank, "维修", state.level, state.medal, state.pct);
+  const dps = reloadS ? Math.round((atk.final / reloadS) * 10) / 10 : 0;
+  $("footerLine").textContent =
+    `综合：DPS≈${dps}  ·  等级 ${state.level}  ·  勋章 ${state.medal}  ·  加成 ${state.pct}%` +
+    `  (累加：血量+${fmt(hp.bonus)} / 攻击+${fmt(atk.bonus)} / 维修+${fmt(rpr.bonus)})`;
+}
+
+function bindControls() {
+  $("tankSel").addEventListener("change", (e) => { state.tank = e.target.value; render(); });
+  $("medalSlider").addEventListener("input", (e) => { state.medal = clampInt(e.target.value, 0, 250); render(); });
+  $("medalInput").addEventListener("input", (e) => { state.medal = clampInt(e.target.value, 0, 250); render(); });
+  $("pctSlider").addEventListener("input", (e) => { state.pct = clampInt(e.target.value, 0, 65); render(); });
+  $("pctInput").addEventListener("input", (e) => { state.pct = clampInt(e.target.value, 0, 65); render(); });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const sel = $("tankSel");
+  for (const t of TANK_ORDER) {
+    const o = document.createElement("option");
+    o.value = t; o.textContent = t;
+    sel.appendChild(o);
+  }
+  buildLevelButtons();
+  bindControls();
+
+  // 绑定已升级复选框
+  const upChecks = ["攻击", "血量", "维修"];
+  for (const attr of upChecks) {
+    const chk = document.getElementById(attr + "Up");
+    chk.addEventListener("change", () => {
+      state[attr + "Up"] = chk.checked;
+      render();
+    });
+  }
+
+  render();
+});
+
+</script>
+</body>
+</html>
