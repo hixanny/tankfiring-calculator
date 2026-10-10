@@ -445,11 +445,11 @@ class TankQueryApp:
         header = tk.Frame(self.root, bg=C_BG)
         header.pack(fill="x", padx=20, pady=(16, 8))
         tk.Label(
-            header, text="5星坦克属性查询", bg=C_BG, fg=C_ACCENT,
+            header, text="5星坦克属性计算器", bg=C_BG, fg=C_ACCENT,
             font=("Microsoft YaHei UI", 18, "bold"),
         ).pack(anchor="w")
         tk.Label(
-            header, text="选择坦克 · 等级 1–13 · 勋章等级 0–250 · 五星坦克加成 0–65% · 查看攻击 / 血量 / 维修",
+            header, text="选择坦克 · 等级 1–13 · 勋章等级 0–250 · 五星坦克加成 0–65% · 查看攻击 / 血量 / 维修\n© 2026 hixanny",
             bg=C_BG, fg=C_MUTED, font=("Microsoft YaHei UI", 9),
         ).pack(anchor="w", pady=(2, 0))
 
@@ -549,6 +549,7 @@ class TankQueryApp:
         self.card_frames = {}
         self.card_widgets = {}
         self.up_vars: dict[str, tk.IntVar] = {}
+        self.up_checkboxes: dict[str, tk.Checkbutton] = {}
         card_cfg = [
             ("攻击", C_CARD_ATK, 0),
             ("血量", C_CARD_HP, 1),
@@ -564,12 +565,14 @@ class TankQueryApp:
             tk.Label(title_row, text=name, bg=color, fg=C_MUTED,
                      font=("Microsoft YaHei UI", 11, "bold")).pack(side="left")
             up_var = tk.IntVar(value=0)
-            tk.Checkbutton(
+            up_checkbox = tk.Checkbutton(
                 title_row, text="已升级", variable=up_var,
                 bg=color, activebackground=color, fg=C_TEXT, selectcolor=C_INPUT,
                 font=("Microsoft YaHei UI", 9), command=self.query,
-            ).pack(side="right")
+            )
+            up_checkbox.pack(side="right")
             self.up_vars[name] = up_var
+            self.up_checkboxes[name] = up_checkbox
 
             value = tk.Label(frame, text="—", bg=color, fg=C_TEXT,
                              font=("Microsoft YaHei UI", 28, "bold"))
@@ -643,6 +646,19 @@ class TankQueryApp:
             return
         tank, level, medal, pct = parsed
         self._refresh_level_btns()
+
+        # 13 级及以上：强制禁用并取消勾选所有已升级复选框
+        if level >= 13:
+            for attr in ATTR_KEYS:
+                if attr in self.up_checkboxes:
+                    self.up_checkboxes[attr].config(state='disabled')
+                    self.up_vars[attr].set(0)
+                    self.up_checkboxes[attr].deselect()
+        else:
+            # 1-12 级：正常启用复选框
+            for attr in ATTR_KEYS:
+                if attr in self.up_checkboxes:
+                    self.up_checkboxes[attr].config(state='normal')
 
         ttype, reload_s, speed, acc = META.get(tank, ("", 0, 0, 0))
         self.meta_label.config(
