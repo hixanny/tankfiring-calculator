@@ -20,20 +20,12 @@
 TankFiring_坦克属性查询.html
 ```
 
-### 桌面版
-需要 Python 环境：
-```bash
-python TankFiring_坦克属性查询.py
-```
-
 ## 项目结构
 
 ```
 tankfiring-calculator/
 ├── README.md          # 项目说明
-├── TankFiring_坦克属性查询.html    # 网页标准版
-└── TankFiring_坦克属性查询.py     # Python桌面版
-```
+├── TankFiring_坦克属性查询.html    # 网页标准版```
 
 ## 核心算法
 
